@@ -3,7 +3,7 @@
 // node.js Edition
 
 "use strict";
-var sys = require('sys');
+var util = require('util');
 var fs = require('fs');
 
 function readFile(filename) {
@@ -11,7 +11,7 @@ function readFile(filename) {
 }
 
 function print(s) {
-	sys.puts(s);
+	util.puts(s);
 }
 
 function quit(rc) {

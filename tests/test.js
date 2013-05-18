@@ -2,14 +2,14 @@ var assert = require('assert'),
     bencode = require('../bencode'),
     bitfield = require('../bitfield'),
     sortedArray = require('../sortedArray'),
-    sys = require('sys');
+    util = require('util');
 
 // Test bencode
 
 function assertSame(a, b) {
     var sa = JSON.stringify(a),
         sb = JSON.stringify(b);
-    // sys.puts(sa + ' === ' + sb);
+    // util.puts(sa + ' === ' + sb);
     assert.ok(sa === sb);
 }
 
@@ -79,7 +79,7 @@ function tests() {
         testBitfield();
         testSortedArray();
     } catch (myError) {
-        sys.puts("Exception: " + JSON.stringify(myError));
+        util.puts("Exception: " + JSON.stringify(myError));
         throw myError;
     }
 }

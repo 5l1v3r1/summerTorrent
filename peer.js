@@ -1,7 +1,7 @@
-var bitfield = require('./bitfield'), net = require('net'), sys = require('sys');
+var bitfield = require('./bitfield'), net = require('net'), util = require('util');
 
 exports.create = function create(key, host, port, torrent, connection){
-    sys.log('peer.create ' + host + ':' + port);
+    util.log('peer.create ' + host + ':' + port);
     var stream = connection || net.createConnection(port, host), header = String.fromCharCode(19) + 'BitTorrent protocol', flagBytes = '\0\0\0\0\0\0\0\0', input = '', needHeader = true, goodPieces = bitfield.create(torrent.store.pieceCount), amInterested = false, amChoked = true, peerInterested = false, peerChoked = true, peer = {
         torrent: torrent,
         key: key,
@@ -23,30 +23,30 @@ exports.create = function create(key, host, port, torrent, connection){
             text.substring(28, 48) === this.torrent.metaInfo.info_hash);
         }
     };
-    
+
     stream.setEncoding('binary');
     stream.addListener('connect', function(){
         var firstPacket = header + flagBytes +
         torrent.metaInfo.info_hash +
         torrent.peerId;
-        sys.log("Connection established to " + host + ':' + port);
+        util.log("Connection established to " + host + ':' + port);
         stream.write(firstPacket, 'binary');
     });
     stream.setNoDelay();
     stream.setTimeout(0);
     stream.addListener('error', function(e){
-        sys.log('peer error ' + host + ':' + port + ' ' + e);
+        util.log('peer error ' + host + ':' + port + ' ' + e);
         stream.end();
         torrent.removePeer(key);
     });
     stream.addListener('end', function(){
-        sys.log('peer end ' + host + ':' + port + ' ');
+        util.log('peer end ' + host + ':' + port + ' ');
         torrent.removePeer(key);
     });
     stream.addListener('data', function(data){
-        // Too verbose 
-        //sys.log('got data from ' + host);
-        
+        // Too verbose
+        //util.log('got data from ' + host);
+
         function readInt(s, offset){
             offset = offset || 0;
             if (s.length < offset + 4) {
@@ -57,18 +57,18 @@ exports.create = function create(key, host, port, torrent, connection){
             (s.charCodeAt(offset + 2) << 8) |
             s.charCodeAt(offset + 3);
         }
-        
+
         function doHave(data){
             var piece = readInt(data);
-            sys.log('have ' + piece);
+            util.log('have ' + piece);
             goodPieces.set(piece, true);
         }
-        
+
         function doBitfield(data){
-            sys.log('bitfield');
+            util.log('bitfield');
             goodPieces.setWire(data);
         }
-        
+
         function readRequest(data){
             var index = readInt(data, 0), begin = readInt(data, 4), length = readInt(data, 8), pieceLength = torrent.store.pieceLength, pieceCount = torrent.store.pieceCount;
             if (!((begin >= 0 && begin + length <= pieceLength) &&
@@ -81,15 +81,15 @@ exports.create = function create(key, host, port, torrent, connection){
                 begin: begin,
                 length: length
             };
-            sys.log('Peer requested piece ' + index);
+            util.log('Peer requested piece ' + index);
         }
-        
+
         function requestEqual(a, b){
             return a.index == b.index &&
             a.begin == b.begin &&
             a.length == b.length;
         }
-        
+
         function doRequest(data){
             var request = readRequest(data), requests = peer.requests, r, i, len = requests.length;
             for (i = 0; i < len; i += 1) {
@@ -101,57 +101,57 @@ exports.create = function create(key, host, port, torrent, connection){
             }
             requests.push(request);
         }
-        
+
         function doPiece(data){
             var index = readInt(data, 0), begin = readInt(data, 4), block = data.substring(8), length = block.length, pieceLength = torrent.store.pieceLength, pieceCount = torrent.store.pieceCount;
             if (!((begin >= 0 && begin + length <= pieceLength) &&
             (length > 0 && length <= 32 * 1024) &&
             (index >= 0 && index < pieceCount))) {
-                sys.log('oh crap bad piece params');
+                util.log('oh crap bad piece params');
                 throw "piece bad parameters";
             }
-            //sys.log("received piece " + index +' ' + begin + ' ' + length); // Reduced verbosity
-            
+            //util.log("received piece " + index +' ' + begin + ' ' + length); // Reduced verbosity
+
             if(!torrent.downloading[index]) torrent.downloading[index] = {};
             torrent.downloading[index][begin] = true;
-            
+
             filestore.writePiecePart(torrent.store, index, begin, block, function(err){
-                //sys.log('Wrote piece ' + index + (err||"NO ERRORS FTW!")); // Reduced verbosity.
-                
-								var hasdone = 0;                
+                //util.log('Wrote piece ' + index + (err||"NO ERRORS FTW!")); // Reduced verbosity.
+
+								var hasdone = 0;
                 for(var z in torrent.downloading[index])
                 	hasdone += +torrent.downloading[index][z];
-                
+
                 if(hasdone == Math.ceil(pieceLength/Math.pow(2, 15))){
                 	//sure hope this is right
-                	//sys.log('yay done '+hasdone+' out of about '+Math.ceil(pieceLength/Math.pow(2, 15)));
-                	//sys.log(JSON.stringify(torrent.downloading));
-                	
+                	//util.log('yay done '+hasdone+' out of about '+Math.ceil(pieceLength/Math.pow(2, 15)));
+                	//util.log(JSON.stringify(torrent.downloading));
+
                 	torrent.downloading[index] = {};
                 	delete torrent.downloading[index];
-                	
-                	
+
+
                 	filestore.inspectPiece(torrent.store, index, function(valid){
                 		if(valid){
-                			sys.log('Wrote Piece #' + index);
+                			util.log('Wrote Piece #' + index);
                 			torrent.store.goodPieces.set(index, 1); //change bitfield
 		                  delete torrent.piecesQueue[index]; // Delete from the pieces Queue
 		                  for (var i in torrent.peers) {
 		                      torrent.peers[i].have(index);
 		                  }
                 		}else{
-                			//sys.log('waah broken piece');
+                			//util.log('waah broken piece');
                 		}
                 	})
-                
+
                 }else{
-                	//sys.log('not done yet')
+                	//util.log('not done yet')
                 }
-                
-                
+
+
             });
         }
-        
+
         function doCancel(data){
             var request = readRequest(data), requests = peer.requests, r, i, len = requests.length;
             for (i = 0; i < len; i += 1) {
@@ -162,7 +162,7 @@ exports.create = function create(key, host, port, torrent, connection){
                 }
             }
         }
-        
+
         // returns true if a message was processed
         function processMessage(){
             var dataLen, id;
@@ -174,7 +174,7 @@ exports.create = function create(key, host, port, torrent, connection){
                     peer.peerId = input.substring(48, 68);
                     input = input.substring(68);
                     needHeader = false;
-                    // sys.log('Got valid header');
+                    // util.log('Got valid header');
                     return true;
                 }
                 else {
@@ -191,7 +191,7 @@ exports.create = function create(key, host, port, torrent, connection){
             }
             if (dataLen == 0) {
                 // Keep alive;
-                sys.log(host + " Keep alive");
+                util.log(host + " Keep alive");
             }
             else {
                 id = input.charCodeAt(4);
@@ -200,44 +200,44 @@ exports.create = function create(key, host, port, torrent, connection){
                     // Choke
                     peerChoked = true;
                 }
-                else 
+                else
                     if (id == 1) {
                         // Unchoke
                         peerChoked = false;
                     }
-                    else 
+                    else
                         if (id == 2) {
                             // Interested
                             peerInterested = true;
                         }
-                        else 
+                        else
                             if (id == 3) {
                                 // Not interested
                                 peerInterested = false;
                             }
-                            else 
+                            else
                                 if (id == 4) {
                                     doHave(payload);
                                 }
-                                else 
+                                else
                                     if (id == 5) {
                                         doBitfield(payload);
                                     }
-                                    else 
+                                    else
                                         if (id == 6) {
                                             doRequest(payload);
                                         }
-                                        else 
+                                        else
                                             if (id == 7) {
                                                 doPiece(payload);
                                             }
-                                            else 
+                                            else
                                                 if (id == 8) {
                                                     doCancel(payload);
                                                 }
-                                                else 
+                                                else
                                                     if (id == 9) {
-                                                        sys.log(host + " DHT listen-port");
+                                                        util.log(host + " DHT listen-port");
                                                     }
                                                     else {
                                                         // May want to silently ignore
@@ -246,30 +246,30 @@ exports.create = function create(key, host, port, torrent, connection){
             }
             input = input.substring(4 + dataLen);
             return true;
-            
+
         };
-        
+
         input += data;
         try {
-            while (processMessage()) 
+            while (processMessage())
                 ;
-        } 
+        }
         catch (e) {
-            sys.log('exception thrown while processing messages ' + e);
+            util.log('exception thrown while processing messages ' + e);
             stream.end();
             torrent.removePeer(key);
         }
     });
-    
+
     function encodeInt(i){
         return String.fromCharCode(0xff & (i >> 24)) +
         String.fromCharCode(0xff & (i >> 16)) +
         String.fromCharCode(0xff & (i >> 8)) +
         String.fromCharCode(0xff & i);
     }
-    
+
     function writePacket(op, payload){
-    
+
         try {
             if (op === 0) {
                 //stream.write('\0\0\0\0', 'binary');
@@ -281,10 +281,10 @@ exports.create = function create(key, host, port, torrent, connection){
                 String.fromCharCode(op) +
                 payload, 'binary');
             }
-            
-        } 
+
+        }
         catch (err) {
-            sys.log(err);
+            util.log(err);
         }
     }
     peer.setChoke = function(state){
@@ -317,6 +317,6 @@ exports.create = function create(key, host, port, torrent, connection){
     peer.sendKeepalive = function(){
         writePacket(0);
     }
-    
+
     return peer;
 };

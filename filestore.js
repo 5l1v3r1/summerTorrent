@@ -1,4 +1,5 @@
-var sys = require('sys'), bitfield = require('./bitfield'), fs = require('fs'), cryptolib = require('crypto'), path = require('path');
+var bitfield = require('./bitfield'), fs = require('fs'), cryptolib = require('crypto'), path = require('path'),
+    util= require('util');
 
 /*
  * Filestore: { pieceLength, pieces, files: [{path offset length md5}...],
@@ -19,7 +20,7 @@ function parseMultipleFiles(store, info, destDir){
     }
     store.files = files;
     store.totalLength = totalLength;
-    sys.log('files: ' + JSON.stringify(store.files));
+    util.log('files: ' + JSON.stringify(store.files));
 }
 
 function create(metaInfo, destDir){
@@ -39,7 +40,7 @@ function create(metaInfo, destDir){
         }
         pieceLength = info['piece length'];
         result.pieceLength = pieceLength;
-        
+
         // Check if this is a single file torrent or a file list torrent
         if ('length' in info) {
             // single file
@@ -73,7 +74,7 @@ function findFile(files, offset){
         if (file.offset <= offset && file.offset + file.length > offset) {
             return c;
         }
-        else 
+        else
             if (file.offset < offset) {
                 a = c;
             }
@@ -136,7 +137,7 @@ function ensureDirExists(fullPath, callback){
             if (err) {
                 makeDir();
             }
-            else 
+            else
                 if (!stats.isDirectory()) {
                     fs.unlink(newPath, function(err){
                         if (err) {
@@ -191,7 +192,7 @@ function ensureFile2(file, callback){
                 }
             });
         }
-        else 
+        else
             if (stats.isDirectory() || stats.size !== file.length) {
                 fs.unlink(file.path, function(error){
                     if (error) {
@@ -356,13 +357,13 @@ function inspectPiece(store, pieceIndex, callback){
     readPiece(store, pieceIndex, function(error, data){
         var digest, expected, goodPiece;
         if (error) callback(false, error);
-        
+
         hash.update(data);
         digest = hash.digest('binary');
-        
+
         expected = store.pieces.substring(pieceIndex * 20, (pieceIndex + 1) * 20);
         goodPiece = expected === digest;
-        
+
         callback(goodPiece)
     });
 }

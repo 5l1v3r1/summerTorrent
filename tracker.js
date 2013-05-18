@@ -1,4 +1,4 @@
-var sys = require('sys'), http = require('http'), bencode = require('bencode'), url = require('url');
+var util = require('util'), http = require('http'), bencode = require('./bencode'), url = require('url');
 
 function toHexDigit(n){
     return '0123456789abcdef'[n];
@@ -71,13 +71,13 @@ function httpRequestHelper(verb, host, port, path, headers, redirectLimit, callb
                 body += chunk;
             });
         }
-        else 
+        else
             if (statusCode >= 300 && statusCode <= 399) {
                 if (redirectLimit <= 0) {
                     callback('Too many redirects', response);
                 }
                 else {
-                    sys.log('redirect ' + statusCode + ' ' + JSON.stringify(body));
+                    util.log('redirect ' + statusCode + ' ' + JSON.stringify(body));
                     httpRequestHelper(verb, host, port, path, headers, redirectLimit - 1, callback);
                 }
             }
@@ -92,13 +92,13 @@ function httpRequestHelper(verb, host, port, path, headers, redirectLimit, callb
 function ping(trackerClient, params, callback){
     var path = trackerClient.trackerRelativeUri + '?' +
     queryStringify(params);
-    sys.log('pinging tracker');
+    util.log('pinging tracker');
     httpRequestHelper('GET', trackerClient.host, trackerClient.port, path, {}, 10, function(error, response, body){
         var result = {};
         if (!error) {
             try {
                 result = bencode.decode(body);
-            } 
+            }
             catch (e) {
                 error = e;
             }

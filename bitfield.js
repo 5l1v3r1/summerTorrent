@@ -1,4 +1,4 @@
-var sys = require('sys'), sortedArray = require('./sortedArray');
+var sortedArray = require('./sortedArray');
 
 /*
  * n: number of bits, b: optional byte string,
@@ -59,6 +59,6 @@ exports.create = function(n, bytes){
              */
         }
     };
-    
+
     return ret;
 };

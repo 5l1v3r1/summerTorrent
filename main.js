@@ -1,4 +1,4 @@
-var sys = require('sys'), torrent = require('./torrent');
+var torrent = require('./torrent');
 
 String.prototype.toBinary = function(){
     var ret = '';
@@ -11,7 +11,7 @@ String.prototype.toBinary = function(){
 Object.size = function(obj){
     var size = 0, key;
     for (key in obj) {
-        if (obj.hasOwnProperty(key)) 
+        if (obj.hasOwnProperty(key))
             size++;
     }
     return size;
@@ -35,7 +35,7 @@ function stringToBinary(bytes){
 };
 
 function binaryToString(bytes){ //as a string
-    if (bytes % 7) 
+    if (bytes % 7)
         throw "poop";
     for (var ret = '', l = bytes.length, i = 0; i < l; i += 7) {
         ret += String.fromCharCode(parseInt(bytes.substr(i, 7), 2))
