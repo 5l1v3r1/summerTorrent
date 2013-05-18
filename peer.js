@@ -284,7 +284,9 @@ exports.create = function create(key, host, port, torrent, connection){
 
         }
         catch (err) {
-            util.log(err);
+            util.log('writePacket: ' + err);
+            stream.end();
+            torrent.removePeer(key);
         }
     }
     peer.setChoke = function(state){
