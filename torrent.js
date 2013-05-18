@@ -128,7 +128,10 @@ function create(torrentPath, destDir){
                                             var piecelength = (i == that.store.pieceCount - 1) ? that.store.lastPieceLength : that.store.pieceLength;
 
                                             for (var start = 0; start < piecelength; start += Math.pow(2, 15)) {
-                                                that.peers[j].sendCancel(i, start, ((start + Math.pow(2, 15)) <= piecelength ? Math.pow(2, 15) : (piecelength - start)));
+                                                var peer = that.peers[j];
+                                                if (peer) {
+                                                    peer.sendCancel(i, start, ((start + Math.pow(2, 15)) <= piecelength ? Math.pow(2, 15) : (piecelength - start)));
+                                                }
                                             }
                                         }
 
