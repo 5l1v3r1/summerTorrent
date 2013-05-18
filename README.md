@@ -12,6 +12,4 @@ $ ./summerTorrent a.torrent
 
 Known bugs:
 
-Spews a lot of error messages to the console.
-
 Currently tested on node 0.6.8, which is a pretty old version of Node.
