@@ -357,15 +357,17 @@ function inspectPiece(store, pieceIndex, callback){
     readPiece(store, pieceIndex, function(error, data){
         var digest, expected, goodPiece;
         if (error) callback(false, error);
+        if (data) {
+            hash.update(data);
+        } else {
+            digest = hash.digest('binary');
 
-        hash.update(data);
-        digest = hash.digest('binary');
+            expected = store.pieces.substring(pieceIndex * 20, (pieceIndex + 1) * 20);
+            goodPiece = expected === digest;
 
-        expected = store.pieces.substring(pieceIndex * 20, (pieceIndex + 1) * 20);
-        goodPiece = expected === digest;
-
-        callback(goodPiece)
-    });
+            callback(goodPiece);
+        }
+     });
 }
 
 // callback(err)
