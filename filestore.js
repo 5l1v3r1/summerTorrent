@@ -320,8 +320,11 @@ function pieceLength(store, pieceIndex){
     }
 }
 
+/**
+ * Inspect the next piece of the store.
+ */
 function inspectImp(store, pieceIndex, hash, callback){
-    readPiece(store, 0, function(error, data){
+    readPiece(store, pieceIndex, function(error, data){
         var digest, expected, goodPiece;
         if (error) {
             callback(error);
@@ -370,7 +373,10 @@ function inspectPiece(store, pieceIndex, callback){
      });
 }
 
-// callback(err)
+/**
+ * Inspect all the pieces to set up the store.goodPieces table.
+ * callback(err)
+ */
 function inspect(store, callback){
     var hash = cryptolib.createHash('sha1');
     store.goodPieces = bitfield.create(store.pieceCount);

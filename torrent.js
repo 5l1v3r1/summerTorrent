@@ -98,6 +98,8 @@ function create(torrentPath, destDir){
                         }
                         else {
                             util.log('finished inspecting files.');
+                            var bytesLeft = that.store.left;
+                            util.log('bytes left to fetch: ' + bytesLeft);
                             listener.create(that.listenerPort, that);
                             that.trackerClient = tracker.create(that.metaInfo);
                             that.pingTracker();
